@@ -24,7 +24,7 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Check code formatting and linting with Black
+      - name: Formatting and linting with Black
         run: |
           black --check app/ tests/
 
