@@ -1,4 +1,3 @@
- # .github/workflows/ci.yml
 name: CI
 
 on:
@@ -25,10 +24,9 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Lint with flake8
+      - name: Check code formatting and linting with Black
         run: |
-          # Customize to your liking, e.g. ignore W503, etc.
-          flake8 --max-line-length=88 app tests
+          black --check app/ tests/
 
       - name: Test with pytest
         run: |
