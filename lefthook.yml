@@ -1,0 +1,10 @@
+pre-commit:
+  parallel: true
+  commands:
+    formatting:
+      glob: "*.py"
+      run: |
+        black {staged_files}
+        git add {staged_files}
+      skip:
+        - "git commit -m 'chore: formatting'" 
