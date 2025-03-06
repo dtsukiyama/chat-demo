@@ -1,0 +1,35 @@
+ # .github/workflows/ci.yml
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Lint with flake8
+        run: |
+          # Customize to your liking, e.g. ignore W503, etc.
+          flake8 --max-line-length=88 app tests
+
+      - name: Test with pytest
+        run: |
+          pytest --maxfail=1 --disable-warnings -q
