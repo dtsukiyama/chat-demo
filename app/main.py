@@ -3,6 +3,7 @@ import streamlit as st
 from dotenv import load_dotenv
 import openai
 import chromadb
+from chromadb.config import Settings
 from chromadb.utils import embedding_functions
 
 # Load environment variables
@@ -35,24 +36,23 @@ faq_data = [
     },
 ]
 
-# Create data directory if it doesn't exist
-os.makedirs("data", exist_ok=True)
 
-# Initialize ChromaDB client and collection with persistent storage
-if "chroma_client" not in st.session_state:
+def init_chroma():
+    """Initialize ChromaDB client and collection"""
+    # Create data directory if it doesn't exist
+    os.makedirs("data", exist_ok=True)
+
     # Define OpenAI embedding function for Chroma to use
     embed_fn = embedding_functions.OpenAIEmbeddingFunction(
         api_key=openai.api_key, model_name="text-embedding-3-small"
     )
 
     # Initialize ChromaDB client with new configuration
-    st.session_state.chroma_client = chromadb.PersistentClient(path="data")
+    client = chromadb.PersistentClient(path="data")
 
     # Create a collection for FAQs
-    st.session_state.faq_collection = (
-        st.session_state.chroma_client.get_or_create_collection(
-            name="thoughtful_faq", embedding_function=embed_fn
-        )
+    collection = client.get_or_create_collection(
+        name="thoughtful_faq", embedding_function=embed_fn
     )
 
     # Add all FAQ Q&A to the collection
@@ -60,11 +60,20 @@ if "chroma_client" not in st.session_state:
         q_text = item["question"]
         ans_text = item["answer"]
         try:
-            st.session_state.faq_collection.add(
+            collection.add(
                 documents=[q_text], metadatas=[{"answer": ans_text}], ids=[f"faq_{idx}"]
             )
         except Exception as e:
             st.error(f"Error adding FAQ '{q_text[:30]}...': {e}")
+
+    return client, collection
+
+
+# Initialize ChromaDB client and collection with persistent storage
+if "chroma_client" not in st.session_state:
+    # Only initialize if we're not in a testing environment
+    if not os.getenv("TESTING"):
+        st.session_state.chroma_client, st.session_state.faq_collection = init_chroma()
 
 # Initialize chat history in session state
 if "messages" not in st.session_state:
