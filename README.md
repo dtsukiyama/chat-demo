@@ -7,7 +7,7 @@ A Streamlit-based chat application that provides intelligent responses about Tho
 - Interactive chat interface for asking questions about Thoughtful AI
 - Predefined FAQ knowledge base with common questions and answers
 - Semantic search using ChromaDB and OpenAI embeddings
-- GPT-3.5 fallback for questions not covered in the FAQ
+- GPT-4o-mini fallback for questions not covered in the FAQ
 - Persistent chat history during the session
 - Source attribution for answers (FAQ vs. AI-generated)
 - Pre-commit hooks for code quality (Black formatting and linting)
@@ -115,7 +115,7 @@ For local development:
 
 1. **Exact Match**: The system first checks for exact matches against predefined FAQs
 2. **Semantic Search**: If no exact match is found, it uses ChromaDB with OpenAI embeddings to find similar questions
-3. **GPT Fallback**: If no relevant FAQ is found, it uses GPT-3.5 to generate an appropriate response
+3. **GPT Fallback**: If no relevant FAQ is found, it uses GPT-4o-mini to generate an appropriate response
 
 ## License
 
