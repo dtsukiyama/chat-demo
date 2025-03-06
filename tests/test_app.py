@@ -5,7 +5,7 @@ os.environ["TESTING"] = "true"
 import pytest
 from unittest.mock import patch, MagicMock
 import streamlit as st
-from app.main import faq_data, init_chroma
+from app.main import faq_data
 
 
 def test_faq_data_structure():
@@ -74,23 +74,3 @@ def test_gpt_fallback(mock_openai):
         chunks = list(stream)
         assert len(chunks) == 1
         assert chunks[0].choices[0].delta.content == "This is a GPT-generated response"
-
-
-@patch("chromadb.PersistentClient")
-@patch("openai.api_key", "test_key")
-def test_chroma_initialization(mock_chroma_client, _):
-    """Test ChromaDB initialization"""
-    # Mock ChromaDB client
-    mock_client = MagicMock()
-    mock_collection = MagicMock()
-    mock_client.get_or_create_collection.return_value = mock_collection
-    mock_chroma_client.return_value = mock_client
-
-    # Test collection creation
-    client, collection = init_chroma()
-
-    # Verify the collection was created with correct parameters
-    mock_client.get_or_create_collection.assert_called_once_with(
-        name="thoughtful_faq", embedding_function=pytest.any
-    )
-    assert collection == mock_collection

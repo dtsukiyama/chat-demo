@@ -10,9 +10,6 @@ from chromadb.utils import embedding_functions
 # Load environment variables
 load_dotenv()
 
-# Initialize OpenAI client
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
 # Predefined Q&A dataset about Thoughtful AI
 faq_data = [
     {
@@ -38,6 +35,16 @@ faq_data = [
 ]
 
 
+def get_openai_client():
+    """Get OpenAI client with API key"""
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key and not os.getenv("TESTING"):
+        raise ValueError(
+            "OpenAI API key not found. Please set OPENAI_API_KEY environment variable."
+        )
+    return OpenAI(api_key=api_key or "dummy_key_for_testing")
+
+
 def init_chroma():
     """Initialize ChromaDB client and collection"""
     # Create data directory if it doesn't exist
@@ -45,7 +52,8 @@ def init_chroma():
 
     # Define OpenAI embedding function for Chroma to use
     embed_fn = embedding_functions.OpenAIEmbeddingFunction(
-        api_key=os.getenv("OPENAI_API_KEY"), model_name="text-embedding-3-small"
+        api_key=os.getenv("OPENAI_API_KEY") or "dummy_key_for_testing",
+        model_name="text-embedding-3-small",
     )
 
     # Initialize ChromaDB client with new configuration
@@ -139,7 +147,8 @@ if user_input:
                 message_placeholder = st.empty()
                 full_response = ""
 
-                # Stream the response
+                # Get OpenAI client and stream response
+                client = get_openai_client()
                 stream = client.chat.completions.create(
                     model="gpt-4",
                     messages=[

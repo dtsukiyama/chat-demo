@@ -3,6 +3,8 @@ pre-commit:
   commands:
     formatting:
       glob: "*.py"
-      run: black --check {staged_files}
+      run: |
+        black {staged_files}
+        git add {staged_files}
       skip:
         - "git commit -m 'chore: formatting'" 
