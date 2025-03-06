@@ -2,6 +2,7 @@ import os
 import streamlit as st
 from dotenv import load_dotenv
 import openai
+from openai import OpenAI
 import chromadb
 from chromadb.config import Settings
 from chromadb.utils import embedding_functions
@@ -9,8 +10,8 @@ from chromadb.utils import embedding_functions
 # Load environment variables
 load_dotenv()
 
-# Set OpenAI API key
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Initialize OpenAI client
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Predefined Q&A dataset about Thoughtful AI
 faq_data = [
@@ -44,7 +45,7 @@ def init_chroma():
 
     # Define OpenAI embedding function for Chroma to use
     embed_fn = embedding_functions.OpenAIEmbeddingFunction(
-        api_key=openai.api_key, model_name="text-embedding-3-small"
+        api_key=os.getenv("OPENAI_API_KEY"), model_name="text-embedding-3-small"
     )
 
     # Initialize ChromaDB client with new configuration
@@ -139,7 +140,7 @@ if user_input:
                 full_response = ""
 
                 # Stream the response
-                stream = openai.chat.completions.create(
+                stream = client.chat.completions.create(
                     model="gpt-4",
                     messages=[
                         {
@@ -160,15 +161,26 @@ if user_input:
                 # Final update without cursor
                 message_placeholder.markdown(full_response)
                 answer_found = full_response
+                # Add source caption
+                st.caption("Source: AI Assistant")
+
+            # Add the GPT response to chat history
+            st.session_state.messages.append(
+                {"role": "assistant", "content": full_response}
+            )
 
         except Exception as e:
             answer_found = (
                 "I'm sorry, I couldn't find an answer to that question at the moment."
             )
             st.error(f"OpenAI API error: {e}")
+            # Add error response to chat history
+            st.session_state.messages.append(
+                {"role": "assistant", "content": answer_found}
+            )
 
     # Display the assistant's answer (for FAQ responses)
-    if answer_found and source == "faq":
+    elif answer_found and source == "faq":
         with st.chat_message("assistant"):
             st.markdown(answer_found)
             st.caption("Source: FAQ Knowledge Base")

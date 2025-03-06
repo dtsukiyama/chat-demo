@@ -36,40 +36,44 @@ def test_chat_message_handling(mock_session_state):
     assert mock_session_state.messages[1] == assistant_message
 
 
-@patch("openai.chat.completions")
-def test_gpt_fallback(mock_chat_completions):
+@patch("openai.OpenAI")
+def test_gpt_fallback(mock_openai):
     """Test GPT fallback when FAQ doesn't have an answer"""
+    # Create a mock response for streaming
+    mock_chunk = MagicMock()
+    mock_chunk.choices = [
+        MagicMock(delta=MagicMock(content="This is a GPT-generated response"))
+    ]
+    mock_stream = MagicMock()
+    mock_stream.__iter__.return_value = [mock_chunk]
 
-    # Create a mock stream
-    class MockStream:
-        def __iter__(self):
-            return self
-
-        def __next__(self):
-            mock_response = MagicMock()
-            mock_response.choices = [
-                MagicMock(delta=MagicMock(content="This is a GPT-generated response"))
-            ]
-            raise StopIteration
-
-    # Set up the mock to return our mock stream
-    mock_chat_completions.create.return_value = MockStream()
+    # Set up the mock client
+    mock_client = MagicMock()
+    mock_client.chat.completions.create.return_value = mock_stream
+    mock_openai.return_value = mock_client
 
     # Test GPT response
     with patch("app.main.openai.api_key", "test_key"):
         from app.main import openai
 
-        stream = openai.chat.completions.create(
+        client = openai.OpenAI(api_key="test_key")
+        stream = client.chat.completions.create(
             model="gpt-4",
             messages=[{"role": "user", "content": "What is the future of AI?"}],
             stream=True,
         )
+
         # Verify the stream was created with correct parameters
-        mock_chat_completions.create.assert_called_once_with(
+        mock_client.chat.completions.create.assert_called_once_with(
             model="gpt-4",
             messages=[{"role": "user", "content": "What is the future of AI?"}],
             stream=True,
         )
+
+        # Verify we can iterate over the stream
+        chunks = list(stream)
+        assert len(chunks) == 1
+        assert chunks[0].choices[0].delta.content == "This is a GPT-generated response"
 
 
 @patch("chromadb.PersistentClient")
